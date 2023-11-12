@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:test": "cp .env.test .env && rsync -avz --exclude-from='deploy.exclude.cfg' . root@103.253.146.136:/root/chatbot",
+    "deploy:test": "cp .env.test .env && rsync -avz --exclude-from='deploy.exclude.cfg' . root@YOUR_IP_ADDRESS:/root/chatbot",
     "dev": "cp .env.local .env && nodemon app.js"
   },
   "author": "James Miller",

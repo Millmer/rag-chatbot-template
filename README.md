@@ -10,7 +10,7 @@ Currently it is set to using the OpenAI model `gpt-3.5-turbo-16k` for chat compl
 
 ## Backend Architecture
 
-**_Note:_** The Ingestion Phase is part of the [myjoju-data](https://github.com/mygevity/myjoju-data) repo
+**_Note:_** The Ingestion Phase is part of the [rag-ingestion](https://github.com/Millmer/rag-ingestion-template) repo
 
 ![Chatbot with RAG Arch](./rag-chatbot-arch.excalidraw.png)
 
@@ -125,6 +125,6 @@ npm run deploy
 ```
 
 **_Note:_** Before running this command, modify the AWS profile variable named `my-aws-profile` and the S3 bucket location and the CloudFront distribution ID.
-Assuming you have the AWS profile installed locally it will build the Svelte project, upload to the S3 bucket and invalidate the CloudFfont distribution cache.
+Assuming you have the AWS profile installed locally it will build the Svelte project, upload to the S3 bucket and invalidate the CloudFront distribution cache.
 
 You can view the results at your CF distribution providing you supply the correct `?key=` param.
