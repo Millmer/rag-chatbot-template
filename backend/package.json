@@ -1,0 +1,29 @@
+{
+  "name": "chatbot-backend",
+  "version": "1.0.0",
+  "description": "Chatbot BE template",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:test": "cp .env.test .env && rsync -avz --exclude-from='deploy.exclude.cfg' . root@103.253.146.136:/root/chatbot",
+    "dev": "cp .env.local .env && nodemon app.js"
+  },
+  "author": "James Miller",
+  "license": "ISC",
+  "devDependencies": {
+    "claudia": "^5.14.1",
+    "nodemon": "^2.0.22"
+  },
+  "dependencies": {
+    "@dqbd/tiktoken": "^1.0.7",
+    "common-tags": "^1.8.2",
+    "dotenv": "^16.0.3",
+    "eventsource-parser": "^1.0.0",
+    "express": "^4.18.2",
+    "knex": "^2.4.2",
+    "morgan": "^1.10.0",
+    "openai": "^3.2.1",
+    "pg": "^8.11.0",
+    "socket.io": "^4.6.1"
+  }
+}

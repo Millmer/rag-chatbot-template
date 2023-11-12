@@ -1,0 +1,30 @@
+{
+	"name": "chatbot-frontend",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"lint": "prettier --plugin-search-dir . --check . && eslint .",
+		"format": "prettier --plugin-search-dir . --write .",
+		"deploy": "npm run build && aws s3 sync build/ s3://chatbot.my-website.com-website --delete --acl public-read --profile my-aws-profile && aws cloudfront create-invalidation --profile my-aws-profile --distribution-id ABCD1234EFG --paths /index.html"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^2.0.0",
+		"@sveltejs/adapter-static": "^2.0.2",
+		"@sveltejs/kit": "^1.5.0",
+		"eslint": "^8.28.0",
+		"eslint-config-prettier": "^8.5.0",
+		"eslint-plugin-svelte": "^2.26.0",
+		"prettier": "^2.8.0",
+		"prettier-plugin-svelte": "^2.8.1",
+		"svelte": "^3.54.0",
+		"vite": "^4.3.0"
+	},
+	"type": "module",
+	"dependencies": {
+		"socket.io-client": "^4.6.2",
+		"stylyn": "^0.0.6"
+	}
+}

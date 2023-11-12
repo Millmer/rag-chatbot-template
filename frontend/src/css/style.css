@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+.chatbot {
+    width: 100%;
+    margin: auto;
+}
+
+/* Style overrides */
+
+.button {
+    color: white;
+    background-color: var(--guru-brown);
+    user-select: none;
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    opacity: 0.25;
+}
+
+select.dropdown {
+  background-color: white;
+  padding: 0.25rem;
+}
+
+input[type="password"],
+input[type="number"],
+input[type="text"],
+select.dropdown,
+textarea {
+    border: 1px solid #DCDCDC !important;
+    border-radius: 3px !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+}
+
+input[type="password"]:focus-visible,
+input[type="number"]:focus-visible,
+input[type="text"]:focus-visible,
+select.dropdown:focus-visible,
+textarea:focus-visible {
+    border: 1px solid !important;
+    outline: none;
+}
+/* Custom styling */
+:root {
+    --guru-brown: #70483C;
+    --guru-red: #d85c54;
+    --guru-grey-300: #90A4AE;
+    --guru-grey-400: #78909C;
+    --guru-grey-500: #607D8B;
+    --guru-grey-600: #546E7A;
+    --guru-grey-700: #455A64;
+}
+
+*:not(i) {
+    font-family: Roboto, sans-serif;
+}
+
+.full_width {
+    width: 100% !important;
+}
