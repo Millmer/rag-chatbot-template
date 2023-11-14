@@ -23,6 +23,28 @@ function log_socket_event(socket, event, data) {
     );
 }
 
+function compare_version(min_version, socket) {
+    const current_version = socket.handshake.headers.version || socket.handshake.query.version || socket.handshake.auth.version || '';
+    const current_version_split = current_version.split('.');
+    const min_required_version_split = min_version.split('.');
+
+    if (current_version_split.length >= 2) {
+        const min_major = min_required_version_split[0];
+        const min_minor = min_required_version_split[1];
+        const current_major = current_version_split[0];
+        const current_minor = current_version_split[1];
+
+        if (current_minor >= min_minor && current_major >= min_major) {
+            console.info('Supported version');
+            return true;
+        }
+    }
+
+    console.warn('Version is marked as deprecated');
+    return false;
+}
+
 module.exports = {
-    log_socket_event
+    log_socket_event,
+    compare_version
 }
