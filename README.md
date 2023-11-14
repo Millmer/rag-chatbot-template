@@ -8,6 +8,23 @@ Repo containing the Backend API and Frontend for serving the Chatbot. Responsibl
 Currently it is set to using the OpenAI model `gpt-3.5-turbo-16k` for chat completion. In production you can use whatever model best fits your needs.
 **_Note:_** If you use a fine-tuned model, be sure to include it's token limits in the backend config.
 
+### Noted improvments
+- Clean up Socket.io application architecture (it's getting a bit messy)
+  - Add middlewares and libs to refactor common functions
+- Add a Redis DB to manage sessions/chats and keep hold of other things like chat history (although AssitantsAPI would solve that, would still need something like Redis to match userIDs to generated threads, could use a simple sqlite on the server as well)
+- Ideally should Stream Audio Over HTTP for better performance
+  - On `chat:speak` we save the generated audio file somewhere like S3
+  - Provide signedURL back to FE
+  - FE streams/downloads audio from returned URL to the user
+- Migrate to new AssistantsAPI
+  - What to do with custom knowledge base then - upload to assistant or somehow use custom RAG with the assitant?
+- Integrate proper evals to assess performance and affect of prompt-engineering & RAG changes
+  - With evals, experiment and improve prompt
+  - With evals, improve on RAG relevance, document count and tokens
+  - With evals, exeriment with different chunkings
+  - Experiment with HyDE as with these questions, we may match our documents better as they usually contain the answer rather than the question.
+- Add CI/CD rather than manually run package.json scripts
+
 ## Backend Architecture
 
 **_Note:_** The Ingestion Phase is part of the [rag-ingestion](https://github.com/Millmer/rag-ingestion-template) repo
