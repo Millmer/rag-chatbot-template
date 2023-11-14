@@ -1,14 +1,14 @@
 # rag-chatbot
-This repo is an stripped down version of a RAG chatbot I worked on and deployed. It can be used as a template to launch similar things.
+This repo is an stripped down version of a RAG chatbot I worked on and deployed. It can be used as a template to launch similar things. Basic arch can be seen [here](./rag-chatbot-arch.excalidraw.png) or below.
 
-It is a fictitious chatbot called "GastroGuru", a bot that can suggest recipes based on ingredients you have at home, dietary restrictions, or desired cuisine. It can fetch recipes from a vast database, offering cooking tips and alternatives for missing ingredients.
+It is a fictitious chatbot called "GastroGuru", a bot that can suggest recipes based on ingredients you have at home, dietary restrictions, or desired cuisine. It can fetch recipes from a vast PSQL vector database of chunked and embedded information (see [Ingestion Phase repo](https://github.com/Millmer/rag-ingestion-template)), offering cooking tips and alternatives for missing ingredients.
 
-Repo containing the Backend API and Frontend for serving the Chatbot. Responsible for receiving the user requests and streaming the OpenAI responses using `Socket.io`.
+This repo contains the Backend API and Svelte Frontend for serving the Chatbot. We receive and respond to the user requests by streaming the OpenAI responses using `Socket.io`.
 
 Currently it is set to using the OpenAI model `gpt-3.5-turbo-16k` for chat completion. In production you can use whatever model best fits your needs.
 **_Note:_** If you use a fine-tuned model, be sure to include it's token limits in the backend config.
 
-### Noted improvments
+### Suggested improvments
 - Clean up Socket.io application architecture (it's getting a bit messy)
   - Add middlewares and libs to refactor common functions
 - Add a Redis DB to manage sessions/chats and keep hold of other things like chat history (although AssitantsAPI would solve that, would still need something like Redis to match userIDs to generated threads, could use a simple sqlite on the server as well)
