@@ -38,6 +38,13 @@
         <Button green disabled={is_streaming} on:click={ask}>
             {@html SendIcon}
         </Button>
+        <Button green disabled={is_streaming} on:click={toggle_mute}>
+            {#if is_muted}
+                {@html SpeakerMuted}
+            {:else}
+                {@html SpeakerUnmuted}
+            {/if}
+      </Button>
     </div>
 </div>
 
@@ -57,6 +64,8 @@ import { PUBLIC_CHATBOT_API_URL } from '$env/static/public';
 import Bubble from '$components/Bubble.svelte';
 import Button from "$components/Button.svelte";
 import SendIcon from '$components/icons/send.svg?raw';
+import SpeakerUnmuted from '$components/icons/speaker-unmuted.svg?raw';
+import SpeakerMuted from '$components/icons/speaker-muted.svg?raw';
 
 const key = $page.url.searchParams.get('key');
 
@@ -64,17 +73,34 @@ const socket = io(PUBLIC_CHATBOT_API_URL, {
       path: "/chatbot/",
       auth: {
           key
+      },
+      extraHeaders: {
+          version: PKG.version
       }
 });
 
-socket.on('connect', _ => socket.emit('chat:create', crypto.randomUUID()));
+let chat_id = crypto.randomUUID();
+let chat_window;
+let messages = [
+    {
+        role: 'assistant',
+        content: "..."
+      }
+    ];
+    let question = '';
+let is_streaming = false;
+let audio;
+let is_muted = false;
+
+socket.on('connect', _ => socket.emit('chat:create', chat_id));
 
 socket.on('chat:create', data => {
     set_message(
         messages.length - 1,
         'assistant',
         data
-    )
+    );
+    speak();
 });
 
 socket.on('answer', data => {
@@ -96,6 +122,14 @@ socket.on('answer', data => {
 socket.on('answer_done', _ => {
     is_streaming = false;
     scroll_to_bottom(chat_window);
+    speak();
+});
+
+socket.on('speak', data => {
+    const audio_blob = new Blob([data], { type: 'audio/mp3' });
+    const audio_url = URL.createObjectURL(audio_blob);
+    audio = new Audio(audio_url);
+    audio.play();
 });
 
 socket.on('exception', data => {
@@ -117,16 +151,6 @@ socket.on('error', _ => {
     is_streaming = false;
 });
 
-let chat_window;
-let messages = [
-    {
-        role: 'assistant',
-        content: "..."
-    }
-];
-let question = '';
-let is_streaming = false;
-
 function set_message(index, role, content, sources = null) {
     messages[index] = {
         role,
@@ -146,9 +170,18 @@ async function ask() {
 
     is_streaming = true;
     const filtered_messages = messages.filter(message => !['assistant:sources', 'user:action'].includes(message.role)).slice(0, -1);
-    socket.emit('chat:ask', filtered_messages);
+    socket.emit('chat:ask', chat_id, filtered_messages);
     await tick();
     scroll_to_bottom(chat_window);
+}
+
+async function speak() {
+    socket.emit('chat:speak', chat_id, messages[messages.length - 1].content);
+}
+
+function toggle_mute() {
+    if (audio) audio.muted = !is_muted;
+    is_muted = !is_muted;
 }
 
 async function show_sources(message) {

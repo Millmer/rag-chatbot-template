@@ -4,5 +4,5 @@ module.exports = {
         'http://localhost:8080',
         'http://localhost:5173',
     ],
-    initial_message: "Hi I'm Bot, ask me any question about CKD and kidney-friendly diets!"
+    initial_message: "Hi I'm GastroGuru, ask me any question about recipes and diets!"
 }
