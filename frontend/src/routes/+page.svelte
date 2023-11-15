@@ -38,13 +38,15 @@
         <Button green disabled={is_streaming} on:click={ask}>
             {@html SendIcon}
         </Button>
-        <Button green disabled={is_streaming} on:click={toggle_mute}>
-            {#if is_muted}
-                {@html SpeakerMuted}
-            {:else}
-                {@html SpeakerUnmuted}
-            {/if}
-      </Button>
+        {#if $feature_flags.speak}
+            <Button green disabled={is_streaming} on:click={toggle_mute}>
+                {#if is_muted}
+                    {@html SpeakerMuted}
+                {:else}
+                    {@html SpeakerUnmuted}
+                {/if}
+            </Button>
+        {/if}
     </div>
 </div>
 
@@ -53,13 +55,14 @@
 </p>
 
 <script>
-import { io } from 'socket.io-client';
 import 'stylyn';
 import './../css/style.css';
 
-import { tick } from 'svelte';
 import { page } from '$app/stores';
-import { PUBLIC_CHATBOT_API_URL } from '$env/static/public';
+import { onMount, tick } from 'svelte';
+import { initialise_socket } from '$lib/webSocketConnection.js';
+
+import { feature_flags } from '$stores/featureFlags';
 
 import Bubble from '$components/Bubble.svelte';
 import Button from "$components/Button.svelte";
@@ -67,88 +70,90 @@ import SendIcon from '$components/icons/send.svg?raw';
 import SpeakerUnmuted from '$components/icons/speaker-unmuted.svg?raw';
 import SpeakerMuted from '$components/icons/speaker-muted.svg?raw';
 
-const key = $page.url.searchParams.get('key');
-
-const socket = io(PUBLIC_CHATBOT_API_URL, {
-      path: "/chatbot/",
-      auth: {
-          key
-      },
-      extraHeaders: {
-          version: PKG.version
-      }
-});
-
-let chat_id = crypto.randomUUID();
+let socket;
+const chat_id = crypto.randomUUID();
 let chat_window;
-let messages = [
-    {
-        role: 'assistant',
-        content: "..."
-      }
-    ];
-    let question = '';
+let messages = [{ role: 'assistant', content: "..." }];
+let question = '';
 let is_streaming = false;
 let audio;
+let audio_url;
 let is_muted = false;
 
-socket.on('connect', _ => socket.emit('chat:create', chat_id));
+onMount(() => {
+    // Set feature falgs
+    const flags = { ...feature_flags };
+    $page.url.searchParams.getAll('feature').forEach(flag => {
+        flags[flag] = true;
+    });
+    feature_flags.set(flags);
 
-socket.on('chat:create', data => {
-    set_message(
-        messages.length - 1,
-        'assistant',
-        data
-    );
-    speak();
-});
+    // Initialise socket
+    const key = $page.url.searchParams.get('key');
+    socket = initialise_socket({ key });
 
-socket.on('answer', data => {
-    let old = messages[messages.length - 1].content;
-    if (old == '...') {
-        old = '';
-    }
+    socket.on('connect', _ => socket.emit('chat:create', chat_id));
 
-    const answer_delta = data.answer.replace(/(?:\r\n|\r|\n)/g, '<br>');
-    set_message(
-        messages.length - 1,
-        'assistant',
-        old + answer_delta,
-        data.sources
-    );
-    scroll_to_bottom(chat_window);
-});
+    socket.on('chat:create', data => {
+        set_message(
+            messages.length - 1,
+            'assistant',
+            data
+        );
+    });
 
-socket.on('answer_done', _ => {
-    is_streaming = false;
-    scroll_to_bottom(chat_window);
-    speak();
-});
+    socket.on('answer', data => {
+        let old = messages[messages.length - 1].content;
+        if (old == '...') {
+            old = '';
+        }
 
-socket.on('speak', data => {
-    const audio_blob = new Blob([data], { type: 'audio/mp3' });
-    const audio_url = URL.createObjectURL(audio_blob);
-    audio = new Audio(audio_url);
-    audio.play();
-});
+        const answer_delta = data.answer.replace(/(?:\r\n|\r|\n)/g, '<br>');
+        set_message(
+            messages.length - 1,
+            'assistant',
+            old + answer_delta,
+            data.sources
+        );
+        scroll_to_bottom(chat_window);
+    });
 
-socket.on('exception', data => {
-    if (data.error) {
-        set_message(messages.length - 1, 'assistant', `Sorry, I encountered an error. Please ask me again. ${data.error}`);
-    } else {
+    socket.on('answer_done', _ => {
+        is_streaming = false;
+        scroll_to_bottom(chat_window);
+        speak();
+    });
+
+    socket.on('speak', data => {
+        if (audio && !audio.paused) {
+            audio.pause();
+            window.URL.revokeObjectURL(audio_url);
+        }
+        const audio_blob = new Blob([data], { type: 'audio/mp3' });
+        audio_url = URL.createObjectURL(audio_blob);
+        audio = new Audio(audio_url);
+        audio.muted = is_muted;
+        audio.play();
+    });
+
+    socket.on('exception', data => {
+        if (data.error) {
+            set_message(messages.length - 1, 'assistant', `Sorry, I encountered an error. Please ask me again. ${data.error}`);
+        } else {
+            set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
+        }
+        is_streaming = false;
+    });
+
+    socket.on('connect_error', _ => {
         set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
-    }
-    is_streaming = false;
-});
+        is_streaming = false;
+    });
 
-socket.on('connect_error', _ => {
-    set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
-    is_streaming = false;
-});
-
-socket.on('error', _ => {
-    set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
-    is_streaming = false;
+    socket.on('error', _ => {
+        set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
+        is_streaming = false;
+    });
 });
 
 function set_message(index, role, content, sources = null) {
@@ -176,7 +181,9 @@ async function ask() {
 }
 
 async function speak() {
-    socket.emit('chat:speak', chat_id, messages[messages.length - 1].content);
+    if ($feature_flags.speak) {
+        socket.emit('chat:speak', chat_id, messages[messages.length - 1].content);
+    }
 }
 
 function toggle_mute() {
