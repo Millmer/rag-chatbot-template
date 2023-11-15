@@ -12,7 +12,8 @@ export default defineConfig({
 	plugins: [sveltekit()],
   resolve: {
 		alias: {
-			'$components': path.resolve(__dirname, './src/components')
+			'$components': path.resolve(__dirname, './src/components'),
+      '$stores': path.resolve(__dirname, './src/stores')
 		}
 	},
   define: {
