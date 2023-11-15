@@ -4,5 +4,6 @@ module.exports = {
         'http://localhost:8080',
         'http://localhost:5173',
     ],
-    initial_message: "Hi I'm GastroGuru, ask me any question about recipes and diets!"
+    initial_message: "Hi I'm GastroGuru, ask me any question about recipes and diets!",
+    RECONNECTION_THRESHOLD: 1000 // 1 second
 }
