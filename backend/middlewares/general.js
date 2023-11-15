@@ -2,20 +2,20 @@ const { log_socket_event } = require('../utils');
 const { RECONNECTION_THRESHOLD } = require('../config');
 
 const logging = (socket, next) => {
-  const original_emit = socket.emit;
+    const original_emit = socket.emit;
 
-  // Override the emit function
-  socket.emit = function(event, ...args) {
-      log_socket_event(socket, event, args[0]);
-      original_emit.apply(socket, [event, ...args]);
-  };
+    // Override the emit function
+    socket.emit = function(event, ...args) {
+        log_socket_event(socket, event, args[0]);
+        original_emit.apply(socket, [event, ...args]);
+    };
 
-  // Log incoming events
-  socket.onAny((event, ...args) => {
-      log_socket_event(socket, event, args[0]);
-  });
+    // Log incoming events
+    socket.onAny((event, ...args) => {
+        log_socket_event(socket, event, args[0]);
+    });
 
-  next();
+    next();
 }
 
 const recent_connections = new Map();
