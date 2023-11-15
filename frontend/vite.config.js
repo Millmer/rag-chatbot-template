@@ -9,13 +9,13 @@ const json = readFileSync(file, 'utf8');
 const PKG = JSON.parse(json);
 
 export default defineConfig({
-	plugins: [sveltekit()],
+  plugins: [sveltekit()],
   resolve: {
-		alias: {
-			'$components': path.resolve(__dirname, './src/components'),
+    alias: {
+      '$components': path.resolve(__dirname, './src/components'),
       '$stores': path.resolve(__dirname, './src/stores')
-		}
-	},
+    }
+  },
   define: {
     PKG
   }
