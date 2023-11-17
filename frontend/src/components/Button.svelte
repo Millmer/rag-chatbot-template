@@ -3,7 +3,7 @@
     class:bold
     class:cm-blue={blue}
     class:full-width={full_width}
-    class:green={green}
+    class:brown={brown}
     class:grey
     class:my-1={!no_margin}
     class:red
@@ -30,7 +30,7 @@ export let disabled = false;
 export let classes = '';
 export let blue = false;
 export let bold = false;
-export let green = false;
+export let brown = false;
 export let grey = false;
 export let red = false;
 export let search = false;
@@ -54,7 +54,7 @@ button:disabled {
     filter: none;
 }
 
-.green {
+.brown {
     background-color: var(--guru-brown) !important;
     color: white;
 }

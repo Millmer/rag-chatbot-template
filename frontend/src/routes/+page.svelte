@@ -18,7 +18,7 @@
                 </Bubble>
             {:else if message.role === MessageRole.USER && message.state === MessageState.USER_ACTION}
                 <div class="sources-button">
-                    <Button green disabled={is_streaming} on:click={show_sources(message)}>
+                    <Button brown disabled={is_streaming} on:click={show_sources(message)}>
                         { message.content }
                     </Button>
                 </div>
@@ -34,11 +34,11 @@
             bind:value={question}
             on:keydown={(e) => e.key === 'Enter' && ask()}
         />
-        <Button green disabled={is_streaming} on:click={ask}>
+        <Button brown disabled={is_streaming} on:click={ask}>
             {@html SendIcon}
         </Button>
         {#if $feature_flags.speak}
-            <Button green disabled={is_streaming} on:click={toggle_mute}>
+            <Button brown disabled={is_streaming} on:click={toggle_mute}>
                 {#if is_muted}
                     {@html SpeakerMuted}
                 {:else}
@@ -46,6 +46,10 @@
                 {/if}
             </Button>
         {/if}
+    </div>
+
+    <div class="disclaimer-text">
+        <p>You are speaking with an AI. This early version of GastroGuru can make mistakes. Its not a medical professional, consider checking important information.</p>
     </div>
 </div>
 
@@ -314,6 +318,18 @@ const scroll_to_bottom = node => {
     letter-spacing: -0.234px;
 }
 
+.disclaimer-text {
+    margin: 0 auto;
+}
+.disclaimer-text p {
+    font-size: 0.5rem;
+    line-height: 0.89rem;
+    letter-spacing: -0.24px;
+    font-weight: 350;
+    text-align: center;
+    color: var(--guru-grey-700)
+}
+
 .loading-dot {
     display: inline-block;
     color: var(--guru-grey-500);
@@ -337,7 +353,7 @@ const scroll_to_bottom = node => {
     display: flex;
     gap: 0.5rem;
     align-items: center;
-    margin: 1rem;
+    margin: 0 1rem;
     border-top: 1px solid #ECEFF1;
 }
 
