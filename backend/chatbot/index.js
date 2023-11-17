@@ -123,31 +123,31 @@ module.exports = (chatbot) => {
         console.timeEnd(`Fetching Sources (${socket.id})`);
 
         if (!using_old_sources) {
-          console.time(`Tokenising Sources (${socket.id})`);
-          let token_count = 0;
-          const max_context_token_len = 1500;
-          for (let i = 0; i < source_sections.length; i++) {
-              const source_section = source_sections[i];
-              const content = source_section.content.trim();
-              let new_text = `Source: ${source_section.source}\n`;
-              new_text += `Heading: ${source_section.heading}\n`;
-              new_text += content.trim();
-              new_text += separator;
-              const encoded = tokenizer.encode(new_text);
-              token_count += encoded.length;
-    
-              if (token_count >= max_context_token_len) break;
-    
-              context_text += new_text;
-    
-              sources.push({
-                  "source": source_section.source,
-                  "url": source_section.url,
-                  "section_content": content
-                }
-              )
-          }
-          console.timeEnd(`Tokenising Sources (${socket.id})`);
+            console.time(`Tokenising Sources (${socket.id})`);
+            let token_count = 0;
+            const max_context_token_len = 1500;
+            for (let i = 0; i < source_sections.length; i++) {
+                const source_section = source_sections[i];
+                const content = source_section.content.trim();
+                let new_text = `Source: ${source_section.source}\n`;
+                new_text += `Heading: ${source_section.heading}\n`;
+                new_text += content.trim();
+                new_text += separator;
+                const encoded = tokenizer.encode(new_text);
+                token_count += encoded.length;
+
+                if (token_count >= max_context_token_len) break;
+
+                context_text += new_text;
+
+                sources.push({
+                    "source": source_section.source,
+                    "url": source_section.url,
+                    "section_content": content
+                  }
+                )
+            }
+            console.timeEnd(`Tokenising Sources (${socket.id})`);
         }
 
         const init_messages = [
@@ -220,11 +220,11 @@ module.exports = (chatbot) => {
         for await (const part of chat_response_stream) {
             chatbot.to(chat_id).emit('answer', {
                 answer: part.choices[0].delta.content,
-                sources
+                sources // TODO: Remove when certain no versions require this anymore
             });
         }
 
-        chatbot.to(chat_id).emit('answer_done');
+        chatbot.to(chat_id).emit('answer_done', sources);
 
         console.timeEnd(`Answering question (${socket.id})`);
         log_socket_event(socket, 'chat:ask', '[END]');
