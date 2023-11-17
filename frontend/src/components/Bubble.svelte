@@ -1,26 +1,34 @@
-{#if role.includes('assistant')}
+{#if message.role === MessageRole.ASSISTANT}
     <div class="row profile-card">
         <div class="column 1 narrow">
-            {@html BotIcon}
+            {@html GastroGuru}
         </div>
-        <p class="column 1 narrow">Bot</p>
+        <p class="column 1 narrow">GastroGuru</p>
     </div>
 {/if}
-<div class="bubble {role}-bubble {loading ? "loading-ellipse" : ""}" bind:clientWidth bind:clientHeight>
+<div class="bubble {message.role}-bubble {loading ? "loading-ellipse" : ""}" bind:clientWidth bind:clientHeight>
     <svg xmlns="http://www.w3.org/2000/svg" width={clientWidth} height={clientHeight} viewBox="0 0 {clientWidth} {clientHeight}" fill="none">
         <rect x=0 y=0 width={clientWidth} height={clientHeight} fill="white" rx=5/>
 
-        {#if role.includes("assistant")}
+        {#if message.role === MessageRole.ASSISTANT}
             <path d="M 20 0 L 65 0 L 42.5 -15 A 0.5 0.6 90 0 0 27.5 -7.5 Q 30 0 20 0" />
-        {:else if role.includes("user")}
+        {:else if message.role === MessageRole.USER}
             <path d="M 20 0 L 65 0 L 42.5 -15 A 0.5 0.6 90 0 0 27.5 -7.5 Q 30 0 20 0" transform="translate({clientWidth}) rotate(90)"/>
         {/if}
 
     </svg>
 
-    <slot/>
-    {#if role === "assistant:sources" && !!sources}
-        {#each sources as { source, url, section_content }}
+    {#if message.state === MessageState.ASSISTANT_GENERATING}
+        <div class="row mt-1" style="align-items: center">
+            <SoundSpinner/>
+            <p class="pl-0.25 mb-0" style="color: var(--guru-grey-700); font-size: 0.75rem;">{ message.content }</p>
+        </div>
+    {:else}
+        <slot/>
+    {/if}
+
+    {#if message.state === MessageState.ASSISTANT_SOURCES}
+        {#each message.sources as { source, url, section_content }}
             <ul>
                 <li>
                     <a href={url + `#:~:text=${encodeURIComponent(extract_first_sentence(section_content))}`} target="_blank">{source}</a>
@@ -31,13 +39,17 @@
 </div>
 
 <script>
-import BotIcon from '$components/icons/bot.svg?raw';
+import GastroGuru from '$components/icons/GastroGuru.svg?raw';
+import SoundSpinner from '$components/SoundSpinner.svelte';
 
-export let role = "assistant";
+import { MessageRole } from '$lib/messageRoles.js';
+import { MessageState } from '$lib/messageStates.js';
+
+export let message = {};
 export let loading = false;
-export let sources = null;
 
-let clientWidth, clientHeight;
+// Set reasonable defaults for initial message to silence undefined errors
+let [clientWidth, clientHeight] = [545, 96];
 
 function extract_first_sentence(text) {
     const match = text.match(/[^.!?]*[.!?]/);
@@ -46,15 +58,13 @@ function extract_first_sentence(text) {
 </script>
 
 <style>
-.assistant-bubble, .assistant\:sources-bubble {
+.assistant-bubble {
     align-self: flex-start;
     color: var(--guru-grey-500);
 }
 
 .assistant-bubble rect,
-.assistant-bubble path,
-.assistant\:sources-bubble rect,
-.assistant\:sources-bubble path {
+.assistant-bubble path {
     fill: #FFF;
 }
 
@@ -88,6 +98,7 @@ function extract_first_sentence(text) {
 
 .profile-card {
     max-width: 50vw;
+    margin-top: 0.75rem;
     margin-bottom: -1rem;
     margin-left: 0.5rem;
 }
@@ -105,32 +116,30 @@ function extract_first_sentence(text) {
     white-space: nowrap;
 }
 
-.user-bubble, .user\:action-bubble {
+.user-bubble {
     color: #FFF;
     align-self: flex-end;
 }
 
 .user-bubble rect,
-.user-bubble path,
-.user\:action-bubble rect,
-.user\:action-bubble path {
+.user-bubble path {
     fill: var(--guru-brown);
 }
 
 ul {
-  color: var(--guru-grey--500);
-  font-size: 0.8rem;
-  font-weight: 400;
-  list-style-type: disc;
-  padding-left: 1rem;
+    color: var(--guru-grey--500);
+    font-size: 0.8rem;
+    font-weight: 400;
+    list-style-type: disc;
+    padding-left: 1rem;
 }
 
 li a {
-  color: var(--guru-brown);
-  font-style: normal;
-  font-weight: 400;
-  line-height: 19.5px;
-  letter-spacing: -0.234px;
-  text-decoration-line: underline;
+    color: var(--guru-brown);
+    font-style: normal;
+    font-weight: 400;
+    line-height: 19.5px;
+    letter-spacing: -0.234px;
+    text-decoration-line: underline;
 }
 </style>

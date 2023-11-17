@@ -6,21 +6,20 @@
     </div>
     <div class="message-list" bind:this={chat_window}>
         {#each messages as message}
-            {#if message.content === '...' && message.role === 'assistant'}
-                <Bubble role={message.role} loading>
+            {#if message.content === '...' && message.role === MessageRole.ASSISTANT}
+                <Bubble message={message} loading>
                     <span class="loading-dot" />
                     <span class="loading-dot" />
                     <span class="loading-dot" />
                 </Bubble>
-            {:else}
-            <Bubble role={message.role} sources={message.sources}>
-                <p class="content">{@html message.content}</p>
-            </Bubble>
-            {/if}
-            {#if message.role === 'assistant' && message.sources && message.sources.length > 0 && !is_streaming && !message.showing_sources}
+            {:else if [MessageState.MESSAGE, MessageState.ASSISTANT_SOURCES, MessageState.ASSISTANT_GENERATING].includes(message.state)}
+                <Bubble message={message}>
+                    <p class="content">{@html message.content}</p>
+                </Bubble>
+            {:else if message.role === MessageRole.USER && message.state === MessageState.USER_ACTION}
                 <div class="sources-button">
                     <Button green disabled={is_streaming} on:click={show_sources(message)}>
-                        Show sources
+                        { message.content }
                     </Button>
                 </div>
             {/if}
@@ -50,7 +49,7 @@
     </div>
 </div>
 
-<p class="0.5 italic" style="float: right;">GastroGuru
+<p class="0.5 italic" style="float: right; padding-right: 1rem;">GastroGuru
     <span class="0.5">v{ PKG.version }</span>
 </p>
 
@@ -61,6 +60,8 @@ import './../css/style.css';
 import { page } from '$app/stores';
 import { onMount, tick } from 'svelte';
 import { initialise_socket } from '$lib/webSocketConnection.js';
+import { MessageState } from '$lib/messageStates.js';
+import { MessageRole } from '$lib/messageRoles.js';
 
 import { feature_flags } from '$stores/featureFlags';
 
@@ -73,15 +74,16 @@ import SpeakerMuted from '$components/icons/speaker-muted.svg?raw';
 let socket;
 const chat_id = crypto.randomUUID();
 let chat_window;
-let messages = [{ role: 'assistant', content: "..." }];
+let messages = [{ role: MessageRole.ASSISTANT, content: "...", state: MessageState.MESSAGE }];
 let question = '';
 let is_streaming = false;
 let audio;
 let audio_url;
 let is_muted = false;
+let generating_message;
 
 onMount(() => {
-    // Set feature falgs
+    // Set feature flags
     const flags = { ...feature_flags };
     $page.url.searchParams.getAll('feature').forEach(flag => {
         flags[flag] = true;
@@ -97,8 +99,10 @@ onMount(() => {
     socket.on('chat:create', data => {
         set_message(
             messages.length - 1,
-            'assistant',
-            data
+            {
+                role: MessageRole.ASSISTANT,
+                content: data
+            }
         );
     });
 
@@ -108,20 +112,35 @@ onMount(() => {
             old = '';
         }
 
-        const answer_delta = data.answer.replace(/(?:\r\n|\r|\n)/g, '<br>');
-        set_message(
-            messages.length - 1,
-            'assistant',
-            old + answer_delta,
-            data.sources
-        );
-        scroll_to_bottom(chat_window);
+        if (data.answer) {
+            const answer_delta = data.answer.replace(/(?:\r\n|\r|\n)/g, '<br>');
+            set_message(
+                messages.length - 1,
+                {
+                    role: MessageRole.ASSISTANT,
+                    content: old + answer_delta,
+                }
+            );
+            scroll_to_bottom(chat_window);
+        }
     });
 
-    socket.on('answer_done', _ => {
+    socket.on('answer_done', async sources => {
         is_streaming = false;
+        speak(messages[messages.length - 1]);
+        if (!!sources.length) {
+            set_message(
+                messages.length,
+                {
+                    role: MessageRole.USER,
+                    content: 'Show Sources',
+                    state: MessageState.USER_ACTION,
+                    sources
+                }
+            );
+        }
+        await tick();
         scroll_to_bottom(chat_window);
-        speak();
     });
 
     socket.on('speak', data => {
@@ -134,55 +153,94 @@ onMount(() => {
         audio = new Audio(audio_url);
         audio.muted = is_muted;
         audio.play();
+
+        // Remove generating message
+        messages = messages.filter(message => message !== generating_message);
+        generating_message = null;
     });
 
     socket.on('exception', data => {
         if (data.error) {
-            set_message(messages.length - 1, 'assistant', `Sorry, I encountered an error. Please ask me again. ${data.error}`);
+            set_message(
+                messages.length - 1,
+                {
+                    role: MessageRole.ASSISTANT,
+                    content: `Sorry, I encountered an error. Please ask me again. ${data.error}`
+                }
+            );
         } else {
-            set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
+            set_message(
+                messages.length - 1,
+                {
+                    role: MessageRole.ASSISTANT,
+                    content: 'Sorry, I encountered an error. Please ask me again.'
+                }
+            );
         }
         is_streaming = false;
     });
 
     socket.on('connect_error', _ => {
-        set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
+        set_message(
+            messages.length - 1,
+            {
+                role: MessageRole.ASSISTANT,
+                content: 'Sorry, I encountered an error. Please ask me again.'
+            }
+        );
         is_streaming = false;
     });
 
     socket.on('error', _ => {
-        set_message(messages.length - 1, 'assistant', 'Sorry, I encountered an error. Please ask me again.');
+        set_message(
+            messages.length - 1,
+            {
+                role: MessageRole.ASSISTANT,
+                content: 'Sorry, I encountered an error. Please ask me again.'
+            }
+        );
         is_streaming = false;
     });
 });
 
-function set_message(index, role, content, sources = null) {
+function set_message(index, { role, content, state = MessageState.MESSAGE, sources = null }) {
     messages[index] = {
         role,
         content,
-        sources,
-        showing_sources: false
+        state,
+        sources
     }
+    return messages[index];
 }
 
 async function ask() {
     messages = [
         ...messages,
-        { role: 'user', content: question },
-        { role: 'assistant', content: "..." }
+        { role: MessageRole.USER, content: question, state: MessageState.MESSAGE },
+        { role: MessageRole.ASSISTANT, content: "...", state: MessageState.MESSAGE }
     ];
     question = '';
 
     is_streaming = true;
-    const filtered_messages = messages.filter(message => !['assistant:sources', 'user:action'].includes(message.role)).slice(0, -1);
+    const filtered_messages = messages.filter(message => message.state === MessageState.MESSAGE).slice(0, -1);
     socket.emit('chat:ask', chat_id, filtered_messages);
     await tick();
     scroll_to_bottom(chat_window);
 }
 
-async function speak() {
+async function speak(message) {
     if ($feature_flags.speak) {
-        socket.emit('chat:speak', chat_id, messages[messages.length - 1].content);
+        generating_message = set_message(
+            messages.length,
+            {
+                role: MessageRole.ASSISTANT,
+                content: "Generating audio",
+                state: MessageState.ASSISTANT_GENERATING
+            }
+        );
+        await tick();
+        socket.emit('chat:speak', chat_id, message.content);
+        scroll_to_bottom(chat_window);
     }
 }
 
@@ -192,17 +250,22 @@ function toggle_mute() {
 }
 
 async function show_sources(message) {
-    message.showing_sources = true;
     set_message(
-      messages.length,
-      'user:action',
-      'Show Sources'
+        messages.indexOf(message),
+        {
+            role: MessageRole.USER,
+            content: 'Showing Sources',
+            state: MessageState.ACTION_COMPLETED
+        }
     );
     set_message(
-      messages.length,
-      'assistant:sources',
-      'Of course! Here are the sources I used',
-      message.sources
+        messages.length,
+        {
+            role: MessageRole.ASSISTANT,
+            content: 'Of course! Here are the sources I used',
+            state: MessageState.ASSISTANT_SOURCES,
+            sources: message.sources
+        }
     );
     await tick();
     scroll_to_bottom(chat_window);
