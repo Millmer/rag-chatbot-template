@@ -220,7 +220,7 @@ module.exports = (chatbot) => {
         for await (const part of chat_response_stream) {
             chatbot.to(chat_id).emit('answer', {
                 answer: part.choices[0].delta.content,
-                sources // TODO: Remove when certain no versions require this anymore
+                ...(!compare_version(package.version, socket) && { sources }) // TODO: Remove when certain no versions require this anymore
             });
         }
 

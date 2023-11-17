@@ -35,7 +35,6 @@ function compare_version(min_version, socket) {
         const current_minor = current_version_split[1];
 
         if (current_minor >= min_minor && current_major >= min_major) {
-            console.info('Supported version');
             return true;
         }
     }
