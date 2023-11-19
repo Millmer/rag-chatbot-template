@@ -11,6 +11,9 @@ const config = {
     pool: {
         min: 0,
         max: 1
+    },
+    migrations: {
+        tableName: 'chatbot_knex_migrations'
     }
 };
 
