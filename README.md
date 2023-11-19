@@ -129,6 +129,37 @@ location /chatbot/ {
 }
 ```
 
+## Postgres Database
+Imagine the database lives in an EC2 server. To support Vector Search with the database, we need to install a plugin called `PG Vector`. We assume the following PG Version:
+
+*__PG Version__: PostgreSQL 12.14 (Ubuntu 12.14-0ubuntu0.20.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0, 64-bit*
+
+### PG Vector Setup
+The [PGVector plugin](https://github.com/pgvector/pgvector) (v0.4.1) is used to handle vector embeddings for the ChatBot.
+
+To install the following dependencies were first installed:
+```sh
+sudo apt install make # Version 4.1.2
+sudo apt-get install gcc # Version 9.4.0
+sudo apt-get install postgresql-server-dev-12 # Matches PG Version
+```
+
+Then install the plugin
+```sh
+cd /tmp
+git clone --branch v0.4.1 https://github.com/pgvector/pgvector.git
+cd pgvector
+make
+make install # may need sudo
+```
+
+Once installed then log in to the PSQL instance and run:
+```sql
+CREATE EXTENSION vector;
+```
+
+And you're done! See the [docs](https://github.com/pgvector/pgvector) for more on how to create vector columns and use certain vector specific operations.
+
 ## Frontend Run
 ```
 cd frontend
