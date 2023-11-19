@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy:test": "cp .env.test .env && rsync -avz --exclude-from='deploy.exclude.cfg' . root@YOUR_IP_ADDRESS:/root/chatbot",
-    "dev": "cp .env.local .env && nodemon app.js"
+    "dev": "cp .env.local .env && nodemon app.js",
+    "migrate:local": "npx knex migrate:latest --env local",
+    "migrate:test": "npx knex migrate:latest --env test"
   },
   "author": "James Miller",
   "license": "ISC",
