@@ -1,12 +1,14 @@
 # rag-chatbot
-This repo is an stripped down version of a RAG chatbot I worked on and deployed. It can be used as a template to launch similar things. Basic arch can be seen [here](./rag-chatbot-arch.excalidraw.png) or below.
+This repo is a stripped down version of a RAG chatbot I worked on and deployed. It can be used as a template to launch similar things. The basic arch can be seen [here](./rag-chatbot-arch.excalidraw.png) or below.
 
 It is a fictitious chatbot called "GastroGuru", a bot that can suggest recipes based on ingredients you have at home, dietary restrictions, or desired cuisine. It can fetch recipes from a vast PSQL vector database of chunked and embedded information (see [Ingestion Phase repo](https://github.com/Millmer/rag-ingestion-template)), offering cooking tips and alternatives for missing ingredients.
 
 This repo contains the Backend API and Svelte Frontend for serving the Chatbot. We receive and respond to the user requests by streaming the OpenAI responses using `Socket.io`.
 
-Currently it is set to using the OpenAI model `gpt-3.5-turbo-16k` for chat completion. In production you can use whatever model best fits your needs.
-**_Note:_** If you use a fine-tuned model, be sure to include it's token limits in the backend config.
+If interested, see the [logs analysis repo](https://github.com/Millmer/rag-chatbot-logs-analysis-notebook), using statistical techniques to cluster the types of questions asked to gain a better understanding of the user's usage of the bot.
+
+Currently, it is set to using the OpenAI model `gpt-3.5-turbo-16k` for chat completion. In production, you can use whatever model best fits your needs.
+**_Note:_** If you use a fine-tuned model, be sure to include its token limits in the backend config.
 
 ### Suggested improvments
 - ~~Clean up Socket.io application architecture (it's getting a bit messy)~~
@@ -16,16 +18,16 @@ Currently it is set to using the OpenAI model `gpt-3.5-turbo-16k` for chat compl
   - Ideally should Stream Audio Over HTTP for better performance
     - On `chat:speak` we save the generated audio file somewhere like S3
     - Provide signedURL back to FE
-    - FE streams/downloads audio from returned URL to the user
+    - FE streams/downloads audio from the returned URL to the user
   - Can we stream the audio directly from OpenAI before the file is finished?
 - Migrate to new AssistantsAPI
-  - What to do with custom knowledge base then - upload to assistant or somehow use custom RAG with the assitant?
-- Incorporate better metrics logging with deliberate structure instead of using basic std::out
+  - What to do with the custom knowledge base then - upload to the assistant or somehow use custom RAG with the assistant?
+- Incorporate better metrics logging with the deliberate structure instead of using basic std::out
 - Collect feedback from users on responses (i.e. 👍 or 👎)
-- Integrate proper evals to assess performance and affect of prompt-engineering & RAG changes ([ExplodingGradient Ragas](https://github.com/explodinggradients/ragas) or [OpenAI Eval](https://github.com/openai/evals))
+- Integrate proper evals to assess performance and effect of prompt-engineering & RAG changes ([ExplodingGradient Ragas](https://github.com/explodinggradients/ragas) or [OpenAI Eval](https://github.com/openai/evals))
   - With evals, experiment and improve prompt
   - With evals, improve on RAG relevance, document count and tokens
-  - With evals, exeriment with different chunkings
+  - With evals, experiment with different chunkings
   - Experiment with HyDE as with these questions, we may match our documents better as they usually contain the answer rather than the question.
 - Add CI/CD rather than manually run package.json scripts
 
@@ -57,7 +59,7 @@ Go into the server and restart:
 pm2 restart ecosystem.config.js
 ```
 
-If `node_modules` changed, the be sure to do a fresh install on the server with:
+If `node_modules` changed, then be sure to do a fresh install on the server with:
 ```sh
 cd chatbot
 npm install
@@ -66,7 +68,7 @@ npm install
 ## Backend Setup
 The chatbot is hosted inside a Digital Ocean droplet as it requires streaming/sockets to work and they're not compatible with AWS Lambda (atm).
 
-To setup a new server we need to install the required software/packages/libraries:
+To set up a new server we need to install the required software/packages/libraries:
 - NodeJS v18 or greater
 - npm
 - pm2
